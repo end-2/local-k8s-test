@@ -8,6 +8,8 @@ NVIDIA GPU를 사용하는 kind 기반 로컬 Kubernetes 환경입니다. 기본
 - CDI를 지원하는 rootful Docker와 NVIDIA Container Toolkit ([준비 안내](docs/gpu.md))
 - 도구 설치 시 curl 또는 wget, sha256sum 또는 shasum과 인터넷 연결
 
+OS, 드라이버, 작업별 도구와 자원 조건은 [최소 요구사항](docs/requirements.md)을 참고하세요.
+
 ## 빠른 시작
 
 Docker를 실행한 뒤 저장소 루트에서 실행합니다.

@@ -4,14 +4,9 @@
 
 ## 준비 사항
 
-- NVIDIA GPU와 정상 동작하는 드라이버가 있는 로컬 Linux 호스트
-- CDI를 지원하는 rootful Docker (28.3 이상 권장)
-- NVIDIA Container Toolkit의 `nvidia-ctk`, `nvidia-cdi-hook`, `nvidia-container-runtime`
-- 기본 가이드의 kind와 kubectl
+호스트 OS, NVIDIA 드라이버, Container Toolkit과 Docker 준비는 [최소 요구사항](requirements.md)을 따릅니다. CDI 목록이 비어 있거나 드라이버 변경 후 오래된 상태라면 [CDI 갱신 안내](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html)를 확인합니다.
 
-호스트에서 `nvidia-smi`와 `nvidia-ctk cdi list`가 동작해야 합니다. 도구가 없다면 [NVIDIA 설치 안내](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)를 따릅니다. CDI 목록이 비어 있거나 드라이버 변경 후 오래된 상태라면 [CDI 갱신 안내](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html)를 확인합니다.
-
-단일 노드 구성에서는 control-plane에, 멀티 노드 구성에서는 첫 번째 worker에 전체 GPU를 연결합니다. MIG, GPU time-slicing과 여러 노드로의 GPU 분배는 구성하지 않습니다. macOS, WSL2, Podman과 rootless Docker는 지원 대상이 아닙니다.
+단일 노드 구성에서는 control-plane에, 멀티 노드 구성에서는 첫 번째 worker에 전체 GPU를 연결합니다. MIG, GPU time-slicing과 여러 노드로의 GPU 분배는 구성하지 않습니다.
 
 ## 실행
 
