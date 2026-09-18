@@ -2,12 +2,13 @@ VARIANT ?= both
 IMAGE_TAG ?= 0.1.0
 AIPERF_IMAGE_TAG ?= 0.12.0
 
-.PHONY: help up down build-image load-image build-benchmark-image load-benchmark-image
+.PHONY: help up down download-model build-image load-image build-benchmark-image load-benchmark-image
 
 help:
 	@echo "Targets:"
 	@echo "  up                    Create or reuse the local Kubernetes cluster"
 	@echo "  down                  Delete the local Kubernetes cluster"
+	@echo "  download-model        Download the pinned model files (LOCAL_K8S_MODELS_DIR overrides .models)"
 	@echo "  build-image           Build inference images (VARIANT=base|enhanced|both)"
 	@echo "  load-image            Load inference images into the cluster nodes"
 	@echo "  build-benchmark-image Build the AIPerf benchmark image"
@@ -20,6 +21,9 @@ up:
 
 down:
 	./scripts/local-k8s.sh down
+
+download-model:
+	./scripts/download-model.sh
 
 build-image:
 	IMAGE_TAG=$(IMAGE_TAG) ./scripts/build-inference-images.sh $(VARIANT)
