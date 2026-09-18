@@ -116,7 +116,7 @@ class Runner:
         self.environment.mkdir()
         print(f'Report: {self.report}', flush=True)
         for variant, concurrency in self.plan:
-            path = ROOT / f'config/transformers-api-aiperf/{variant}/concurrency-{concurrency}'
+            path = ROOT / f'config/benchmarks/transformers-api-aiperf/{variant}/concurrency-{concurrency}'
             manifest = json.loads(self.kube('create', '--dry-run=client', '-k', str(path), '-o', 'json'))
             manifest['metadata'].pop('namespace', None)
             client = next(c for c in manifest['spec']['template']['spec']['containers'] if c['name'] == 'aiperf')
@@ -145,7 +145,7 @@ class Runner:
             'workload': self.expected, 'pre_case_idle_seconds': self.args.cooldown_seconds,
             'gpu_sampling_seconds': 30, 'dry_run': self.args.dry_run,
         })
-        shutil.copytree(ROOT / 'config/transformers-api-aiperf', self.environment / 'configuration')
+        shutil.copytree(ROOT / 'config/benchmarks/transformers-api-aiperf', self.environment / 'configuration')
         for variant in dict(self.plan):
             destination = self.environment / 'source' / variant
             destination.mkdir(parents=True)
@@ -183,7 +183,7 @@ class Runner:
             'metadata': {'name': self.namespace, 'labels': {'aiperf-run': self.run_id}},
         }))
         self.owns_namespace = True
-        self.kube('apply', '-f', str(ROOT / 'config/transformers-api-aiperf/results.yaml'))
+        self.kube('apply', '-f', str(ROOT / 'config/benchmarks/transformers-api-aiperf/results.yaml'))
         self.kube('wait', '--for=condition=Ready', 'pod/aiperf-results', '--timeout=120s', timeout=150)
         reader = json.loads(self.kube('get', 'pod', 'aiperf-results', '-o', 'json'))
         self.node = reader['spec']['nodeName']

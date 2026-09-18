@@ -50,6 +50,6 @@ enhanced 이미지에 설치된 Transformers와 작은 CPU 모델로 실제 배�
 
 ```sh
 docker run --rm --network=none --entrypoint python \
-  -v "$PWD:/workspace:ro" local/transformers-api:0.1.0 \
+  -v "$PWD:/workspace:ro" local/transformers-api-enhanced:0.1.0 \
   /workspace/tests/test-transformers-worker.py
 ```

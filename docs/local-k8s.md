@@ -8,18 +8,18 @@ NVIDIA GPU가 있는 로컬 Linux 호스트와 rootful Docker를 사용합니다
 
 기본 Kubernetes 버전에는 cgroup v2가 필요합니다. 호스트와 같은 아키텍처의 노드 이미지를 사용하고, 노드 수와 workload에 맞춰 CPU, 메모리와 디스크를 확보합니다. [kind 설치 안내](https://kind.sigs.k8s.io/docs/user/quick-start/)
 
-오프라인에서는 도구, 노드 이미지와 [device plugin 이미지](../config/nvidia-device-plugin.yaml)를 미리 준비합니다. 노드 이미지는 Docker에 `load`하고 같은 참조를 `KIND_NODE_IMAGE`로 지정합니다. 노드 생성 뒤 이미지 다운로드 실패로 `up`이 멈추면 `load-archive`로 plugin 이미지를 넣고 `up`을 다시 실행합니다. CUDA 테스트와 workload 이미지도 같은 방법으로 준비합니다. [kind 오프라인 안내](https://kind.sigs.k8s.io/docs/user/working-offline/)
+오프라인에서는 도구, 노드 이미지와 [device plugin 이미지](../config/platform/gpu/nvidia-device-plugin.yaml)를 미리 준비합니다. 노드 이미지는 Docker에 `load`하고 같은 참조를 `KIND_NODE_IMAGE`로 지정합니다. 노드 생성 뒤 이미지 다운로드 실패로 `up`이 멈추면 `load-archive`로 plugin 이미지를 넣고 `up`을 다시 실행합니다. CUDA 테스트와 workload 이미지도 같은 방법으로 준비합니다. [kind 오프라인 안내](https://kind.sigs.k8s.io/docs/user/working-offline/)
 
 ## 클러스터 설정
 
-기본 [kind 설정](../config/kind.yaml)은 GPU가 연결된 단일 노드, 기본 CNI와 스토리지를 사용합니다. API 서버는 `127.0.0.1`의 임의 포트로 노출합니다. `up`은 노드와 CoreDNS 준비, NVIDIA device plugin 배포와 GPU 자원 등록을 기다립니다. GPU 준비가 실패하면 오류로 종료합니다.
+기본 [kind 설정](../config/cluster/kind.yaml)은 GPU가 연결된 단일 노드, 기본 CNI와 스토리지를 사용합니다. API 서버는 `127.0.0.1`의 임의 포트로 노출합니다. `up`은 노드와 CoreDNS 준비, NVIDIA device plugin 배포와 GPU 자원 등록을 기다립니다. GPU 준비가 실패하면 오류로 종료합니다.
 
 버전과 노드 이미지 digest는 [versions.env](../config/versions.env)에서 관리합니다. 변경 시 [kind 릴리스](https://github.com/kubernetes-sigs/kind/releases)에 명시된 kind와 노드 이미지 조합을 사용하고 kubectl 버전도 맞춥니다. `install`은 다운로드한 도구의 SHA-256을 검증하며, 스크립트는 `.bin/`의 도구를 PATH보다 우선합니다.
 
 | 환경 변수 | 기본값 | 용도 |
 | --- | --- | --- |
 | `CLUSTER_NAME` | `local-k8s` | 클러스터 이름 |
-| `KIND_CONFIG` | `config/kind.yaml` | 사용할 kind YAML |
+| `KIND_CONFIG` | `config/cluster/kind.yaml` | 사용할 kind YAML |
 | `KIND_EXPERIMENTAL_PROVIDER` | `docker` | Docker 사용. `auto`도 Docker 선택 |
 | `WAIT_TIMEOUT` | `180s` | 생성과 각 준비 상태 확인의 대기 시간 |
 | `KIND_NODE_IMAGE` | `config/versions.env` 참조 | 노드 이미지 |
@@ -30,10 +30,10 @@ NVIDIA GPU가 있는 로컬 Linux 호스트와 rootful Docker를 사용합니다
 
 기본 경로는 저장소 기준이며, 사용자 지정 상대 경로는 명령을 실행한 디렉터리 기준입니다. 클러스터 이름에는 소문자, 숫자와 하이픈을 사용하고 다른 클러스터와 겹치지 않게 지정합니다.
 
-control-plane 1개와 worker 2개를 사용하려면 [멀티 노드 설정](../config/kind-multi-node.yaml)을 선택합니다. 첫 번째 worker에만 호스트의 GPU 전체를 연결해 GPU 자원이 중복 등록되지 않도록 합니다.
+control-plane 1개와 worker 2개를 사용하려면 [멀티 노드 설정](../config/cluster/kind-multi-node.yaml)을 선택합니다. 첫 번째 worker에만 호스트의 GPU 전체를 연결해 GPU 자원이 중복 등록되지 않도록 합니다.
 
 ```sh
-KIND_CONFIG=config/kind-multi-node.yaml ./scripts/local-k8s.sh up
+KIND_CONFIG=config/cluster/kind-multi-node.yaml ./scripts/local-k8s.sh up
 ./scripts/local-k8s.sh status
 ```
 
@@ -108,5 +108,5 @@ shellcheck -x scripts/*.sh scripts/lib/*.sh scripts/lib/gpu-docker/docker tests/
 
 ```sh
 ./tests/test-cluster.sh
-KIND_CONFIG=config/kind-multi-node.yaml ./tests/test-cluster.sh
+KIND_CONFIG=config/cluster/kind-multi-node.yaml ./tests/test-cluster.sh
 ```

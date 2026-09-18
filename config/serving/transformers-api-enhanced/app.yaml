@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: transformers-api
+  name: transformers-api-enhanced
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: transformers-api
+      app: transformers-api-enhanced
   template:
     metadata:
       labels:
-        app: transformers-api
+        app: transformers-api-enhanced
     spec:
       terminationGracePeriodSeconds: 60
       nodeSelector:
@@ -23,7 +23,7 @@ spec:
         runAsGroup: 1000
       containers:
         - name: api
-          image: local/transformers-api:0.1.0
+          image: local/transformers-api-enhanced:0.1.0
           imagePullPolicy: Never
           args:
             - --model
@@ -78,10 +78,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: transformers-api
+  name: transformers-api-enhanced
 spec:
   selector:
-    app: transformers-api
+    app: transformers-api-enhanced
   ports:
     - name: http
       port: 8000

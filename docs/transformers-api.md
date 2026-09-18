@@ -10,27 +10,41 @@
 
 ```sh
 api_variant=base
-docker build --network=host -t local/transformers-api:0.1.0 "inference/transformers-api-$api_variant"
-mkdir -p .local-k8s/image-tmp
-TMPDIR="$PWD/.local-k8s/image-tmp" ./scripts/local-k8s.sh load-image local/transformers-api:0.1.0
-./scripts/local-k8s.sh kubectl apply -f config/transformers-api.yaml
-./scripts/local-k8s.sh kubectl rollout status deployment/transformers-api --timeout=300s
-./scripts/local-k8s.sh kubectl port-forward service/transformers-api 8000:8000
+IMAGE_TAG=0.1.0 ./scripts/build-inference-images.sh "$api_variant"
+IMAGE_TAG=0.1.0 ./scripts/load-inference-images.sh "$api_variant"
 ```
 
 `--network=host`는 빌드 중 패키지 다운로드에 사용합니다. 이미지는 압축 해제 후 약 10GiB를 사용합니다. 처음 빌드하고 로드할 때는 Docker 저장소에 약 25GiB 이상의 여유 공간을 준비합니다. 이미지 로드용 임시 아카이브는 `.local-k8s/image-tmp`에 저장하고 완료 후 삭제합니다.
-
-[Deployment와 Service](../config/transformers-api.yaml)는 GPU 1개와 읽기 전용 모델 볼륨을 사용합니다. 같은 이미지 태그로 구현을 교체하거나 코드를 수정하면 빌드와 로드 후 다음 명령으로 반영합니다.
-
-```sh
-./scripts/local-k8s.sh kubectl rollout restart deployment/transformers-api
-./scripts/local-k8s.sh kubectl rollout status deployment/transformers-api --timeout=300s
-```
 
 완성된 이미지 아카이브가 있으면 빌드와 `load-image` 대신 다음 명령을 사용합니다.
 
 ```sh
 ./scripts/local-k8s.sh load-archive .local-k8s/images/transformers-api-0.1.0.tar
+```
+
+### 배포와 구현 전환
+
+[base](../config/serving/transformers-api-base/app.yaml)와 [enhanced](../config/serving/transformers-api-enhanced/app.yaml)는 각각 GPU 1개와 읽기 전용 모델 볼륨을 사용합니다. 구현을 전환하려면 위의 `api_variant`를 바꾸고 해당 이미지를 빌드하고 로드합니다.
+
+기존 port-forward를 종료한 뒤 아래 명령을 실행합니다. 이름이 `transformers-api`인 서버를 포함한 API Deployment와 Service를 정리하고, GPU를 반환하도록 Pod 종료를 기다린 뒤 선택한 구현을 배포합니다. 리소스가 없는 최초 배포에도 사용할 수 있으며, 전환 중에는 API가 중단됩니다.
+
+```sh
+./scripts/local-k8s.sh kubectl delete deployment,service \
+  transformers-api transformers-api-base transformers-api-enhanced \
+  --ignore-not-found --cascade=foreground --wait=true --timeout=180s &&
+./scripts/local-k8s.sh kubectl apply -f config/serving/transformers-api-"$api_variant"/app.yaml &&
+./scripts/local-k8s.sh kubectl rollout status deployment/transformers-api-"$api_variant" --timeout=300s &&
+./scripts/local-k8s.sh kubectl port-forward service/transformers-api-"$api_variant" 8000:8000
+```
+
+### 동일 구현의 코드 갱신
+
+이미 배포한 구현의 코드를 같은 이미지 태그로 갱신할 때는 해당 `api_variant`로 이미지를 빌드하고 로드합니다. 기존 port-forward를 종료한 뒤 Deployment를 재시작하고 port-forward를 다시 실행합니다.
+
+```sh
+./scripts/local-k8s.sh kubectl rollout restart deployment/transformers-api-"$api_variant" &&
+./scripts/local-k8s.sh kubectl rollout status deployment/transformers-api-"$api_variant" --timeout=300s &&
+./scripts/local-k8s.sh kubectl port-forward service/transformers-api-"$api_variant" 8000:8000
 ```
 
 ## 엔드포인트
@@ -115,7 +129,7 @@ JSON 청크의 `object`는 `chat.completion.chunk`이며, 같은 요청의 청�
 두 구현은 `--model`, `--served-model-name`, `--host`, `--port`, `--max-input-tokens`, `--max-output-tokens`, `--default-output-tokens`를 지원합니다. 기본값은 실행할 이미지의 도움말로 확인하고 Deployment의 `args`에서 조정합니다.
 
 ```sh
-docker run --rm --network=none local/transformers-api:0.1.0 --help
+docker run --rm --network=none local/transformers-api-"$api_variant":0.1.0 --help
 ```
 
 모델은 오프라인으로 로드합니다. 로컬 테스트용 API이며 인증은 제공하지 않습니다. 클라이언트 연결이 끊기면 해당 요청을 취소합니다.
@@ -133,6 +147,6 @@ python3 -m venv .local-k8s/api-test-venv
 Pod가 `Pending`이면 GPU 자원 할당과 모델 볼륨 설정을 확인하고, 로딩이나 생성 오류는 서버 로그를 확인합니다. 사용 후 port-forward를 종료하고 Deployment와 Service를 삭제하면 GPU가 반환됩니다.
 
 ```sh
-./scripts/local-k8s.sh kubectl logs deployment/transformers-api
-./scripts/local-k8s.sh kubectl delete -f config/transformers-api.yaml
+./scripts/local-k8s.sh kubectl logs deployment/transformers-api-"$api_variant"
+./scripts/local-k8s.sh kubectl delete -f config/serving/transformers-api-"$api_variant"/app.yaml
 ```

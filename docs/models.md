@@ -38,17 +38,17 @@ export LOCAL_K8S_MODELS_DIR=/path/to/models
 
 ## 마운트 검증
 
-[검증 Job](../config/qwen3-model-check.yaml)은 일반 사용자 권한으로 모든 모델 파일의 SHA-256과 읽기 전용 마운트를 확인합니다. 추론 라이브러리와 GPU 할당 없이 실행하며, 완료 후 5분 뒤 삭제됩니다. 이미지가 없으면 처음 실행할 때 다운로드합니다.
+[검증 Job](../config/models/qwen3-model-check.yaml)은 일반 사용자 권한으로 모든 모델 파일의 SHA-256과 읽기 전용 마운트를 확인합니다. 추론 라이브러리와 GPU 할당 없이 실행하며, 완료 후 5분 뒤 삭제됩니다. 이미지가 없으면 처음 실행할 때 다운로드합니다.
 
 ```sh
-job=$(./scripts/local-k8s.sh kubectl create -f config/qwen3-model-check.yaml -o name)
+job=$(./scripts/local-k8s.sh kubectl create -f config/models/qwen3-model-check.yaml -o name)
 ./scripts/local-k8s.sh kubectl wait --for=condition=Complete "$job" --timeout=180s
 ./scripts/local-k8s.sh kubectl logs "$job"
 ```
 
 ## 추론 Pod에서 사용
 
-[Transformers API 가이드](transformers-api.md)에 이미지 빌드와 서버 실행 방법이 있습니다. 볼륨과 GPU 할당은 [API 서버 Deployment](../config/transformers-api.yaml)를 참고합니다. 모델 ID 대신 `/model` 경로를 지정하고 FP16으로 로드합니다.
+[Transformers API 가이드](transformers-api.md)에 이미지 빌드와 서버 실행 방법이 있습니다. 볼륨과 GPU 할당은 [API 서버 Deployment](../config/serving/transformers-api-base/app.yaml)(enhanced는 `transformers-api-enhanced/app.yaml`)를 참고합니다. 모델 ID 대신 `/model` 경로를 지정하고 FP16으로 로드합니다.
 
 모델 볼륨은 읽기 전용입니다. 런타임 캐시와 출력은 `/tmp`나 별도 쓰기 가능한 볼륨에 저장합니다. 모델 파일과 토크나이저는 [공식 모델 저장소](https://huggingface.co/Qwen/Qwen3-0.6B)에서 가져옵니다.
 

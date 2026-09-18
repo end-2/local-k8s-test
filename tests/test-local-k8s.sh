@@ -216,7 +216,7 @@ ok up
 export CLUSTER_NAME=local-k8s
 isolated="$LOCAL_K8S_STATE_DIR/$CLUSTER_NAME/kubeconfig"
 [ -s "$isolated" ] || fail 'Isolated kubeconfig not created'
-contains '<--config> <'"$project"'/config/kind.yaml>' "$MOCK_TRACE"
+contains '<--config> <'"$project"'/config/cluster/kind.yaml>' "$MOCK_TRACE"
 contains '<--for=condition=Ready> <nodes> <--all>' "$MOCK_TRACE"
 contains '<deployment/coredns>' "$MOCK_TRACE"
 contains '<--name> <local-k8s>' "$MOCK_TRACE"
@@ -312,9 +312,9 @@ rm "$MOCK_ROOT/fail-create"
 ok down
 
 export LOCAL_K8S_MODELS_DIR='custom models'
-KIND_CONFIG="$project/config/kind-multi-node.yaml" ok up
+KIND_CONFIG="$project/config/cluster/kind-multi-node.yaml" ok up
 contains 'docker' "$LOCAL_K8S_STATE_DIR/$CLUSTER_NAME/provider"
-contains '<--config> <'"$project"'/config/kind-multi-node.yaml>' "$MOCK_TRACE"
+contains '<--config> <'"$project"'/config/cluster/kind-multi-node.yaml>' "$MOCK_TRACE"
 contains '<--for=jsonpath={.status.allocatable.nvidia\.com/gpu}=1> <node/local-k8s-worker>' "$MOCK_TRACE"
 [ -f "$MOCK_ROOT/gpu-local-k8s-worker" ] || fail 'Multi-node cluster worker has no GPU'
 [ ! -f "$MOCK_ROOT/gpu-local-k8s-control-plane" ] || fail 'Multi-node cluster exposes GPU on the control plane'

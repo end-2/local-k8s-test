@@ -31,7 +31,7 @@ Usage: ./scripts/local-k8s.sh COMMAND [ARGS]
 
 Environment:
   CLUSTER_NAME                 Default: local-k8s
-  KIND_CONFIG                  Default: config/kind.yaml in this repository
+  KIND_CONFIG                  Default: config/cluster/kind.yaml in this repository
   KIND_EXPERIMENTAL_PROVIDER    docker (default); auto also selects Docker
   KIND_NODE_IMAGE               Default: pinned in config/versions.env
   WAIT_TIMEOUT                 Default: 180s per readiness check
@@ -60,7 +60,7 @@ esac
 STATE_ROOT=${LOCAL_K8S_STATE_DIR:-$ROOT/.local-k8s}
 case $STATE_ROOT in /*) ;; *) STATE_ROOT="$PWD/$STATE_ROOT" ;; esac
 STATE_DIR="$STATE_ROOT/$CLUSTER_NAME"
-KIND_CONFIG=${KIND_CONFIG:-$ROOT/config/kind.yaml}
+KIND_CONFIG=${KIND_CONFIG:-$ROOT/config/cluster/kind.yaml}
 WAIT_TIMEOUT=${WAIT_TIMEOUT:-180s}
 # All kind and kubectl commands, including deletion, use only this kubeconfig.
 KUBECONFIG="$STATE_DIR/kubeconfig"

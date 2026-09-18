@@ -1,6 +1,6 @@
 # Transformers API와 AIPerf 통합 실행
 
-[통합 Job 설정](../config/transformers-api-aiperf/)은 base 또는 enhanced를 선택해 concurrency별로 새 Pod에서 Transformers API와 AIPerf를 함께 실행합니다. 클라이언트는 같은 Pod의 `http://127.0.0.1:8000`으로 접속합니다. 두 구현과 모든 concurrency가 [공통 Job](../config/transformers-api-aiperf/common/job.yaml)의 workload와 자원 설정을 공유합니다.
+[통합 Job 설정](../config/benchmarks/transformers-api-aiperf/)은 base 또는 enhanced를 선택해 concurrency별로 새 Pod에서 Transformers API와 AIPerf를 함께 실행합니다. 클라이언트는 같은 Pod의 `http://127.0.0.1:8000`으로 접속합니다. 두 구현과 모든 concurrency가 [공통 Job](../config/benchmarks/transformers-api-aiperf/common/job.yaml)의 workload와 자원 설정을 공유합니다.
 
 ## 실행 순서
 
@@ -28,16 +28,16 @@ TMPDIR="$PWD/.local-k8s/image-tmp" ./scripts/local-k8s.sh load-image \
   "$api_image" local/aiperf:0.12.0
 ```
 
-이미지 빌드 시 디스크 준비 사항은 [공통 API 가이드](transformers-api.md#이미지-빌드와-실행)를 참고합니다. [결과 저장 설정](../config/transformers-api-aiperf/results.yaml)은 PVC와 결과 조회용 Pod를 생성하며 kind의 `standard` StorageClass를 사용합니다. Job과 조회용 Pod는 모델이 있는 노드에서 같은 `ReadWriteOnce` 볼륨을 공유합니다.
+이미지 빌드 시 디스크 준비 사항은 [공통 API 가이드](transformers-api.md#이미지-빌드와-실행)를 참고합니다. [결과 저장 설정](../config/benchmarks/transformers-api-aiperf/results.yaml)은 PVC와 결과 조회용 Pod를 생성하며 kind의 `standard` StorageClass를 사용합니다. Job과 조회용 Pod는 모델이 있는 노드에서 같은 `ReadWriteOnce` 볼륨을 공유합니다.
 
 | 선택 | API 이미지 | Job 설정 경로 |
 | --- | --- | --- |
-| base | `local/transformers-api-base:0.1.0` | `config/transformers-api-aiperf/base/concurrency-<값>` |
-| enhanced | `local/transformers-api-enhanced:0.1.0` | `config/transformers-api-aiperf/enhanced/concurrency-<값>` |
+| base | `local/transformers-api-base:0.1.0` | `config/benchmarks/transformers-api-aiperf/base/concurrency-<값>` |
+| enhanced | `local/transformers-api-enhanced:0.1.0` | `config/benchmarks/transformers-api-aiperf/enhanced/concurrency-<값>` |
 
-이미지 태그는 [base 설정](../config/transformers-api-aiperf/base/common/kustomization.yaml) 또는 [enhanced 설정](../config/transformers-api-aiperf/enhanced/common/kustomization.yaml)에서 변경합니다. enhanced 전용 서버 옵션을 추가할 때는 enhanced 설정에만 `initContainers`의 `api.args`를 패치합니다. 옵션의 의미는 [enhanced 가이드](transformers-api-enhanced.md)를 참고합니다.
+이미지 태그는 [base 설정](../config/benchmarks/transformers-api-aiperf/base/common/kustomization.yaml) 또는 [enhanced 설정](../config/benchmarks/transformers-api-aiperf/enhanced/common/kustomization.yaml)에서 변경합니다. enhanced 전용 서버 옵션을 추가할 때는 enhanced 설정에만 `initContainers`의 `api.args`를 패치합니다. 옵션의 의미는 [enhanced 가이드](transformers-api-enhanced.md)를 참고합니다.
 
-같은 구현의 concurrency를 비교할 때는 모델 파일, 이미지, 서버 옵션과 자원 설정을 동일하게 유지합니다. 요청 수 256건, 길이 분포, seed와 warmup 8건은 [공통 Job](../config/transformers-api-aiperf/common/job.yaml)에서 관리합니다. 클라이언트 옵션과 결과 해석은 [AIPerf 가이드](aiperf.md#측정-조건과-결과-해석)를 참고합니다.
+같은 구현의 concurrency를 비교할 때는 모델 파일, 이미지, 서버 옵션과 자원 설정을 동일하게 유지합니다. 요청 수 256건, 길이 분포, seed와 warmup 8건은 [공통 Job](../config/benchmarks/transformers-api-aiperf/common/job.yaml)에서 관리합니다. 클라이언트 옵션과 결과 해석은 [AIPerf 가이드](aiperf.md#측정-조건과-결과-해석)를 참고합니다.
 
 서버의 입력 한도는 두 구현 모두 `--max-input-tokens 4096`입니다. 2048토큰 합성 프롬프트에 채팅 템플릿이 추가되는 길이를 수용합니다.
 
@@ -48,7 +48,7 @@ Job 하나는 GPU 1개를 사용합니다. 다른 서버가 GPU를 사용 중이
 아래 수동 실행은 결과용 PVC와 조회 Pod를 먼저 준비합니다. 범위 실행 스크립트는 자체 namespace에서 자동으로 준비합니다.
 
 ```sh
-./scripts/local-k8s.sh kubectl apply -f config/transformers-api-aiperf/results.yaml
+./scripts/local-k8s.sh kubectl apply -f config/benchmarks/transformers-api-aiperf/results.yaml
 ./scripts/local-k8s.sh kubectl wait --for=condition=Ready pod/aiperf-results --timeout=120s
 ```
 
@@ -58,7 +58,7 @@ Job 하나는 GPU 1개를 사용합니다. 다른 서버가 GPU를 사용 중이
 api_variant=enhanced
 concurrency=1
 job=$(./scripts/local-k8s.sh kubectl create \
-  -k "config/transformers-api-aiperf/$api_variant/concurrency-$concurrency" -o name)
+  -k "config/benchmarks/transformers-api-aiperf/$api_variant/concurrency-$concurrency" -o name)
 ./scripts/local-k8s.sh kubectl wait --for=condition=Complete "$job" --timeout=7300s
 ./scripts/local-k8s.sh kubectl logs "$job" -c aiperf
 ./scripts/local-k8s.sh kubectl logs "$job" -c api
@@ -158,5 +158,5 @@ Pod의 `status.initContainerStatuses`에서 `api`의 `restartCount`가 `0`인지
 모든 측정을 종료하고 결과를 복사한 뒤 저장 공간이 필요 없으면 조회용 Pod와 PVC를 삭제합니다. PVC를 삭제하면 보관된 결과도 삭제됩니다.
 
 ```sh
-./scripts/local-k8s.sh kubectl delete -f config/transformers-api-aiperf/results.yaml
+./scripts/local-k8s.sh kubectl delete -f config/benchmarks/transformers-api-aiperf/results.yaml
 ```

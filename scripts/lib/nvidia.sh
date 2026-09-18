@@ -58,7 +58,7 @@ setup_gpu() {
     labeled_nodes=$(kube get nodes -l local-k8s.nvidia-gpu=true -o name)
     [ "$labeled_nodes" = "node/$GPU_NODE" ] || die "Exactly the GPU-connected node must have the local-k8s.nvidia-gpu=true label."
     configure_gpu_node
-    kube apply -f "$ROOT/config/nvidia-device-plugin.yaml"
+    kube apply -f "$ROOT/config/platform/gpu/nvidia-device-plugin.yaml"
     kube -n kube-system rollout status daemonset/nvidia-device-plugin --timeout="$WAIT_TIMEOUT"
     devices=$(docker exec "$GPU_NODE" nvidia-smi --query-gpu=uuid --format=csv,noheader)
     count=$(printf '%s\n' "$devices" | awk 'NF { count++ } END { print count+0 }')
@@ -69,7 +69,7 @@ setup_gpu() {
 }
 
 test_gpu() {
-    job=$(kube create -f "$ROOT/config/gpu-smoke-test.yaml" -o name)
+    job=$(kube create -f "$ROOT/config/platform/gpu/smoke-test.yaml" -o name)
     if ! kube wait --for=condition=Complete "$job" --timeout="$WAIT_TIMEOUT"; then
         kube describe "$job" >&2 || true
         kube logs "$job" >&2 || true

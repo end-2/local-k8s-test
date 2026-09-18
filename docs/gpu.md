@@ -40,12 +40,12 @@ resources:
 ./scripts/local-k8s.sh kubectl apply -f path/to/workload.yaml
 ```
 
-device plugin이 CDI를 통해 할당한 GPU와 드라이버 라이브러리를 전달하므로 workload에 별도 RuntimeClass는 필요하지 않습니다. GPU 1개를 사용 중이면 추가 GPU 요청 Pod는 자원이 반환될 때까지 대기합니다. 실행 예시는 [CUDA 테스트 Job](../config/gpu-smoke-test.yaml)을 참고하세요.
+device plugin이 CDI를 통해 할당한 GPU와 드라이버 라이브러리를 전달하므로 workload에 별도 RuntimeClass는 필요하지 않습니다. GPU 1개를 사용 중이면 추가 GPU 요청 Pod는 자원이 반환될 때까지 대기합니다. 실행 예시는 [CUDA 테스트 Job](../config/platform/gpu/smoke-test.yaml)을 참고하세요.
 
 ## 구성과 유지 관리
 
-- [기본 kind 설정](../config/kind.yaml)과 [멀티 노드 설정](../config/kind-multi-node.yaml): GPU 연결 대상과 노드 내부 containerd 설정
-- [device plugin](../config/nvidia-device-plugin.yaml): NVIDIA RuntimeClass와 GPU 자원 등록
+- [기본 kind 설정](../config/cluster/kind.yaml)과 [멀티 노드 설정](../config/cluster/kind-multi-node.yaml): GPU 연결 대상과 노드 내부 containerd 설정
+- [device plugin](../config/platform/gpu/nvidia-device-plugin.yaml): NVIDIA RuntimeClass와 GPU 자원 등록
 - [Docker 래퍼](../scripts/lib/gpu-docker/docker): 지정한 kind 노드 생성 명령에만 CDI 장치 옵션 추가
 
 노드 생성은 [Docker CDI](https://docs.docker.com/reference/cli/docker/container/run/#cdi-devices)를 사용합니다. 노드에는 호스트의 NVIDIA Toolkit 실행 파일을 복사하고 CDI 명세를 생성합니다. device plugin은 [CDI-CRI 방식](https://github.com/NVIDIA/k8s-device-plugin#configuration-option-details)으로 workload에 GPU를 할당합니다.
