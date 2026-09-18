@@ -1,0 +1,4 @@
+*.sh text eol=lf
+*.env text eol=lf
+*.yaml text eol=lf
+scripts/lib/gpu-docker/docker text eol=lf
