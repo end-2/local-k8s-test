@@ -1,0 +1,155 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: transformers-api-aiperf
+  labels:
+    app: aiperf
+    benchmark: transformers-api-aiperf
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 7200
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: aiperf
+        benchmark: transformers-api-aiperf
+    spec:
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 60
+      automountServiceAccountToken: false
+      # The model and tokenizer share this node's read-only model mount.
+      nodeSelector:
+        local-k8s.nvidia-gpu: "true"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: api
+          image: local/transformers-api:0.1.0
+          imagePullPolicy: Never
+          restartPolicy: Always
+          args:
+            - --model
+            - /model
+            - --served-model-name
+            - Qwen/Qwen3-0.6B
+            - --max-input-tokens
+            - "4096"
+          ports:
+            - name: http
+              containerPort: 8000
+          # Gate the client on readiness, then stop the server with the Job.
+          startupProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              memory: 6Gi
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: model
+              mountPath: /model
+              readOnly: true
+            - name: api-tmp
+              mountPath: /tmp
+      containers:
+        - name: aiperf
+          image: local/aiperf:0.12.0
+          imagePullPolicy: Never
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: CONCURRENCY
+              value: "1"
+            - name: API_URL
+              value: http://127.0.0.1:8000
+          args:
+            - profile
+            - --model
+            - Qwen/Qwen3-0.6B
+            - --tokenizer
+            - /model
+            - --url
+            - $(API_URL)
+            - --endpoint-type
+            - chat
+            - --streaming
+            - --use-server-token-count
+            - --sequence-distribution
+            - "128,64:25;512,128:25;1024,256:25;2048,512:25"
+            - --num-dataset-entries
+            - "256"
+            - --random-seed
+            - "42"
+            - --dataset-sampling-strategy
+            - sequential
+            - --extra-inputs
+            - ignore_eos:true
+            - --concurrency
+            - $(CONCURRENCY)
+            - --warmup-request-count
+            - "8"
+            - --warmup-concurrency
+            - "1"
+            - --request-count
+            - "256"
+            - --request-timeout-seconds
+            - "3600"
+            - --no-server-metrics
+            - --ui
+            - none
+            - --artifact-dir
+            - /results/$(POD_NAME)
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: "1"
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          volumeMounts:
+            - name: model
+              mountPath: /model
+              readOnly: true
+            - name: results
+              mountPath: /results
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: api-tmp
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: model
+          hostPath:
+            path: /models/Qwen3-0.6B
+            type: Directory
+        - name: results
+          persistentVolumeClaim:
+            claimName: aiperf-results
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi

@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namePrefix: base-
+resources:
+  - ../../common
+images:
+  - name: local/transformers-api
+    newName: local/transformers-api-base
+    newTag: 0.1.0
+labels:
+  - pairs:
+      api-variant: base
+    includeTemplates: true

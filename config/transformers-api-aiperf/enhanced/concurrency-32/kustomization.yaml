@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+nameSuffix: -c32
+resources:
+  - ../common
+patches:
+  - target:
+      kind: Job
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: transformers-api-aiperf
+      spec:
+        template:
+          spec:
+            containers:
+              - name: aiperf
+                env:
+                  - name: CONCURRENCY
+                    value: "32"

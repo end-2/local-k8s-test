@@ -37,3 +37,5 @@ Docker를 실행한 뒤 저장소 루트에서 실행합니다.
 멀티 노드 설정과 문제 해결은 [사용 가이드](docs/local-k8s.md), GPU 준비는 [GPU 가이드](docs/gpu.md), Qwen3-0.6B 다운로드와 볼륨 마운트는 [모델 가이드](docs/models.md)를 참고하세요.
 
 HTTP 서버 배포와 요청 형식은 [Transformers API 가이드](docs/transformers-api.md), 부하 생성과 결과 수집은 [AIPerf 클라이언트 가이드](docs/aiperf.md)를 참고하세요.
+
+concurrency마다 새 서버를 시작하는 구성은 [Transformers API와 AIPerf 통합 실행](docs/transformers-api-aiperf.md)을 참고하세요.
