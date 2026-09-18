@@ -18,3 +18,9 @@ These guidelines apply to documentation, code comments, and task descriptions th
 - Put configuration references, advanced usage, troubleshooting, and test instructions in focused documents under docs/.
 - Link to the authoritative configuration or guide instead of repeating version numbers, defaults, or detailed explanations.
 - When updating the README, keep only what a first-time user needs to understand the project and start using it.
+
+## Documentation Ownership
+
+- Keep docs/aiperf.md focused on the AIPerf client: setup, load generation, measurement, results, and client troubleshooting.
+- Keep docs/transformers-api.md limited to behavior and usage shared by base and enhanced: deployment, endpoints, requests, responses, and common settings.
+- Put implementation-specific architecture, scheduling, configuration, and tests in separate guides such as docs/transformers-api-enhanced.md. Link between guides instead of duplicating their contents.

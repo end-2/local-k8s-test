@@ -1,0 +1,29 @@
+ARG BASE_IMAGE=python:3.12-slim-bookworm
+FROM ${BASE_IMAGE}
+
+USER 0
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    HF_HUB_OFFLINE=1 \
+    HF_HUB_DISABLE_TELEMETRY=1 \
+    HF_HOME=/tmp/huggingface \
+    TOKENIZERS_PARALLELISM=false \
+    OMP_NUM_THREADS=2
+
+# PyTorch wheels supply CUDA libraries; no separate CUDA toolkit is needed.
+RUN python -m pip install --no-cache-dir --only-binary=:all: \
+        torch==2.14.0 --index-url https://download.pytorch.org/whl/cu126 \
+    && python -m pip install --no-cache-dir --only-binary=:all: transformers==5.17.0 \
+    && python -m pip check \
+    && python -c "from transformers import AutoModelForCausalLM, AutoTokenizer; import torch; assert torch.version.cuda == '12.6'"
+
+WORKDIR /app
+COPY requirements.txt /app/api-requirements.txt
+RUN python -m pip install --no-cache-dir --only-binary=:all: -r /app/api-requirements.txt \
+    && python -m pip check
+
+COPY server.py api.py engine.py scheduler.py worker.py model_runtime.py contracts.py settings.py /app/
+USER 1000:1000
+EXPOSE 8000
+ENTRYPOINT ["python", "/app/server.py"]
