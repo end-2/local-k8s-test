@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: qwen3-model-check-
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 180
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        local-k8s.nvidia-gpu: "true"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: check
+          image: busybox:1.37.0
+          imagePullPolicy: IfNotPresent
+          command: [sh, -ec]
+          args:
+            - |
+              cd /model
+              cat REVISION
+              sha256sum -c SHA256SUMS
+              awk '$2 == "/model" && $4 ~ /(^|,)ro(,|$)/ { found=1 } END { exit !found }' /proc/mounts
+              if touch .write-test 2>/dev/null; then
+                rm .write-test
+                echo 'Model mount must be read-only' >&2
+                exit 1
+              fi
+              echo 'PASS: model files are readable, verified, and mounted read-only'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: model
+              mountPath: /model
+              readOnly: true
+      volumes:
+        - name: model
+          hostPath:
+            path: /models/Qwen3-0.6B
+            type: Directory
