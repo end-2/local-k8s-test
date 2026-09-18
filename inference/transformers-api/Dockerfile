@@ -19,6 +19,11 @@ RUN python -m pip install --no-cache-dir --only-binary=:all: \
     && python -c "from transformers import AutoModelForCausalLM, AutoTokenizer; import torch; assert torch.version.cuda == '12.6'"
 
 WORKDIR /app
-COPY infer.py /app/infer.py
+COPY requirements.txt /app/api-requirements.txt
+RUN python -m pip install --no-cache-dir --only-binary=:all: -r /app/api-requirements.txt \
+    && python -m pip check
+
+COPY server.py /app/server.py
 USER 1000:1000
-ENTRYPOINT ["python", "/app/infer.py"]
+EXPOSE 8000
+ENTRYPOINT ["python", "/app/server.py"]

@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transformers-api
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: transformers-api
+  template:
+    metadata:
+      labels:
+        app: transformers-api
+    spec:
+      terminationGracePeriodSeconds: 60
+      nodeSelector:
+        local-k8s.nvidia-gpu: "true"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: api
+          image: local/transformers-api:0.1.0
+          imagePullPolicy: Never
+          args:
+            - --model
+            - /model
+            - --served-model-name
+            - Qwen/Qwen3-0.6B
+          ports:
+            - name: http
+              containerPort: 8000
+          startupProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              memory: 6Gi
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: model
+              mountPath: /model
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: model
+          hostPath:
+            path: /models/Qwen3-0.6B
+            type: Directory
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transformers-api
+spec:
+  selector:
+    app: transformers-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

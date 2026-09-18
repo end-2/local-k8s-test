@@ -48,7 +48,7 @@ job=$(./scripts/local-k8s.sh kubectl create -f config/qwen3-model-check.yaml -o 
 
 ## 추론 Pod에서 사용
 
-[Transformers 추론 가이드](transformers.md)에 Python 스크립트, 이미지 빌드와 실행 방법이 있습니다. 볼륨과 GPU 할당은 [추론 Job](../config/transformers-inference.yaml)을 참고합니다. 모델 ID 대신 `/model` 경로를 지정하고 FP16으로 로드합니다.
+[Transformers API 가이드](transformers-api.md)에 이미지 빌드와 서버 실행 방법이 있습니다. 볼륨과 GPU 할당은 [API 서버 Deployment](../config/transformers-api.yaml)를 참고합니다. 모델 ID 대신 `/model` 경로를 지정하고 FP16으로 로드합니다.
 
 모델 볼륨은 읽기 전용입니다. 런타임 캐시와 출력은 `/tmp`나 별도 쓰기 가능한 볼륨에 저장합니다. 모델 파일과 토크나이저는 [공식 모델 저장소](https://huggingface.co/Qwen/Qwen3-0.6B)에서 가져옵니다.
 

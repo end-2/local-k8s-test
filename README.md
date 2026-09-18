@@ -36,4 +36,4 @@ Docker를 실행한 뒤 저장소 루트에서 실행합니다.
 
 멀티 노드 설정과 문제 해결은 [사용 가이드](docs/local-k8s.md), GPU 준비는 [GPU 가이드](docs/gpu.md), Qwen3-0.6B 다운로드와 볼륨 마운트는 [모델 가이드](docs/models.md)를 참고하세요.
 
-모델을 사용하는 Python 스크립트와 컨테이너 빌드, 실행 방법은 [Transformers 추론 가이드](docs/transformers.md)에 있습니다.
+HTTP 서버 배포와 NVIDIA AIPerf 벤치마크는 [Transformers API 가이드](docs/transformers-api.md)를 참고하세요.
