@@ -1,8 +1,12 @@
 VARIANT ?= both
 IMAGE_TAG ?= 0.1.0
 AIPERF_IMAGE_TAG ?= 0.12.0
+MAX_CONCURRENCY ?= 16
+COOLDOWN_SECONDS ?= 20
+BENCHMARK_OUTPUT_DIR ?=
+BENCHMARK_DRY_RUN ?=
 
-.PHONY: help up down download-model build-image load-image build-benchmark-image load-benchmark-image
+.PHONY: help up down download-model build-image load-image build-benchmark-image load-benchmark-image benchmark-aiperf
 
 help:
 	@echo "Targets:"
@@ -13,8 +17,10 @@ help:
 	@echo "  load-image            Load inference images into the cluster nodes"
 	@echo "  build-benchmark-image Build the AIPerf benchmark image"
 	@echo "  load-benchmark-image  Load the AIPerf benchmark image into the cluster nodes"
+	@echo "  benchmark-aiperf      Run the AIPerf benchmark and save the report to reports/"
 	@echo ""
 	@echo "Variables: VARIANT=$(VARIANT) IMAGE_TAG=$(IMAGE_TAG) AIPERF_IMAGE_TAG=$(AIPERF_IMAGE_TAG)"
+	@echo "Benchmark variables: MAX_CONCURRENCY=$(MAX_CONCURRENCY) COOLDOWN_SECONDS=$(COOLDOWN_SECONDS) BENCHMARK_OUTPUT_DIR=$(BENCHMARK_OUTPUT_DIR) BENCHMARK_DRY_RUN=$(BENCHMARK_DRY_RUN)"
 
 up:
 	./scripts/local-k8s.sh up
@@ -36,3 +42,6 @@ build-benchmark-image:
 
 load-benchmark-image:
 	AIPERF_IMAGE_TAG=$(AIPERF_IMAGE_TAG) ./scripts/load-benchmark-images.sh
+
+benchmark-aiperf:
+	python3 scripts/run-transformers-api-aiperf.py --variant $(VARIANT) --max-concurrency $(MAX_CONCURRENCY) --cooldown-seconds $(COOLDOWN_SECONDS) $(if $(BENCHMARK_OUTPUT_DIR),--output-dir $(BENCHMARK_OUTPUT_DIR)) $(if $(BENCHMARK_DRY_RUN),--dry-run)
