@@ -1,0 +1,29 @@
+#!/bin/sh
+set -eu
+
+: "${LOCAL_K8S_DOCKER:?Use scripts/local-k8s.sh to configure the Docker executable}"
+: "${CLUSTER_NAME:?Missing cluster name}"
+
+# kind has no GPU flag. The marker mount selects one node for the host GPUs.
+if [ "${1:-}" = run ]; then
+    target=false
+    cluster=false
+    previous=
+    for argument in "$@"; do
+        if [ "$argument" = --volume=/dev/null:/var/run/local-k8s/nvidia-gpu:ro ]; then
+            target=true
+        fi
+        if [ "$previous" = --label ] && [ "$argument" = "io.x-k8s.kind.cluster=$CLUSTER_NAME" ]; then
+            cluster=true
+        fi
+        previous=$argument
+    done
+    if [ "$target" = true ] && [ "$cluster" = true ]; then
+        : "${LOCAL_K8S_MODELS_DIR:?Use scripts/local-k8s.sh to configure the model directory}"
+        shift
+        exec "$LOCAL_K8S_DOCKER" run --runtime=runc --device=nvidia.com/gpu=all \
+            --label local-k8s.nvidia-gpu=true \
+            --volume "$LOCAL_K8S_MODELS_DIR:/models:ro" "$@"
+    fi
+fi
+exec "$LOCAL_K8S_DOCKER" "$@"

@@ -1,0 +1,25 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  ipFamily: ipv4
+  apiServerAddress: "127.0.0.1"
+  apiServerPort: 0
+nodes:
+  - role: control-plane
+    labels:
+      local-k8s.nvidia-gpu: "true"
+    extraMounts:
+      # The Docker wrapper uses this harmless mount to select the GPU node.
+      - hostPath: /dev/null
+        containerPath: /var/run/local-k8s/nvidia-gpu
+        readOnly: true
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri"]
+      enable_cdi = true
+      cdi_spec_dirs = ["/etc/cdi"]
+    [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
+      runtime_type = "io.containerd.runc.v2"
+      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
+        BinaryName = "/usr/local/bin/nvidia-container-runtime"
+        SystemdCgroup = true
